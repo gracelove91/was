@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
-import java.util.Arrays;
+import java.util.Map;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -24,16 +24,19 @@ public class RequestHandler extends Thread {
 
             BufferedReader br = new BufferedReader(new InputStreamReader(in));
             String line = br.readLine();
-            log.debug("request line : {}", line);
-
             if (line == null) {
                 return;
             }
 
-            while (!line.equals("")) {
+
+            log.debug("request line : {}", line);
+            String[] token = line.split(" ");
+            String url = getDefaultUrl(token);
+            while (!"".equals(line)) {
                 line = br.readLine();
-                log.debug("header : {}", line);
+                log.info(line);
             }
+
 
             DataOutputStream dos = new DataOutputStream(out);
             byte[] body = Files.readAllBytes(new File("./webapp" + url).toPath());
@@ -44,12 +47,21 @@ public class RequestHandler extends Thread {
         }
     }
 
+    private String getDefaultUrl(String[] tokens) {
+        String url = tokens[1];
+        if (url.equals("/")) {
+            url = "/index.html";
+        }
+        return url;
+    }
+
+
     private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
 
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
             dos.writeBytes("Content-Type: text/html;charset=urf-8\r\n");
-            dos.writeBytes("Content-length: " + lengthOfBodyContent);
+            dos.writeBytes("Content-length: " + lengthOfBodyContent + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());
